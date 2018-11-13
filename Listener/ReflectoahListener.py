@@ -1,7 +1,7 @@
 import logging
 import time
 from threading import Thread
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import pyautogui
 
@@ -124,16 +124,16 @@ class ReflectoahListener(roypy.IDepthDataListener):
         :param data:
         :return:
         """
-
+        pass
         # create a figure and show the raw data
-        plt.figure(1)
-        plt.imshow(data)
-
-        plt.show(block=False)
-        plt.draw()
-
-        # this pause is needed to ensure the drawing for some backends
-        plt.pause(0.001)
+        # plt.figure(1)
+        # plt.imshow(data)
+        #
+        # plt.show(block=False)
+        # plt.draw()
+        #
+        # # this pause is needed to ensure the drawing for some backends
+        # plt.pause(0.001)
 
     def move_mouse_by_coords(self, x, y, z):
         logger.debug("move mouse")
