@@ -3,9 +3,9 @@ import logging
 import queue
 import time
 
-import cv2
 import pyautogui
 
+from Listener.MyListener import MyListener
 from Listener.ReflectoahListener import ReflectoahListener
 from utils.roypy_platform_utils import PlatformHelper
 from utils.roypy_sample_utils import CameraOpener, add_camera_opener_options
@@ -120,6 +120,7 @@ def process_event_queue(z_queue, gray_queue, painter=None, seconds=150):
             if painter:
                 painter.paint(zImage)
             elif zImage is not None:
+                import cv2
                 cv2.imshow("Depth", zImage)
                 cv2.waitKey(1)
             else:
