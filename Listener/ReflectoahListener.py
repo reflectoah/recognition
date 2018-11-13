@@ -48,10 +48,7 @@ class ReflectoahListener(roypy.IDepthDataListener):
         self.last_click = time.time()
 
     def onNewData(self, data):
-        start_time = time.time()
         logger.debug("got new data")
-
-        # zvalues = []
 
         x_max_point_index, x_max = None, -np.inf
         for i in range(data.getNumPoints()):
@@ -60,11 +57,9 @@ class ReflectoahListener(roypy.IDepthDataListener):
             # 2. if y>220 or y<-220 => NAN
             # 3. if x<-5 => NAN
 
-            if data.getDepthConfidence(i) > 0 and not (
-                    data.getX(i) > MIN_X_DIST or data.getX(i) < MAX_X_DIST or data.getY(i) > MIN_Y_DIST or data.getY(
-                i) < MAX_Y_DIST or data.getZ(i) > MIN_Z_DIST):
-                # find highest x value in order to find finger tip
-                # zvalues.append(data.getZ(i))
+            if data.getDepthConfidence(i) > 0 and \
+                    not (data.getX(i) > MIN_X_DIST or data.getX(i) < MAX_X_DIST
+                         or data.getY(i) > MIN_Y_DIST or data.getY(i) < MAX_Y_DIST or data.getZ(i) > MIN_Z_DIST):
                 x = data.getX(i)
 
                 # check if point is closest point to mirror
@@ -72,27 +67,51 @@ class ReflectoahListener(roypy.IDepthDataListener):
                     x_max = x
                     x_max_point_index = i
 
-            else:
-                pass
-                # zvalues.append(0)
-        # zarray = np.asarray(zvalues)
-        # p = zarray.reshape(-1, data.width)
-        # self.q.put(p)
-
         logger.debug("x_max: {}\nx_max_ind: {}\n\n".format(x_max, x_max_point_index))
 
         if x_max_point_index:
+
+            x_y_values = []
+
+            width=10
+            index = x_max_point_index
+
+            for r in range(-width, width + 1):
+                i = index + r * data.width
+                for c in range(i - width, i + width + 1):
+                    if data.getDepthConfidence(c) > 0 and not (
+                            data.getX(c) > MIN_X_DIST or data.getX(c) < MAX_X_DIST or data.getY(
+                        c) > MIN_Y_DIST or data.getY(c) < MAX_Y_DIST or data.getZ(c) > MIN_Z_DIST):
+                        x_y_values.append([data.getY(c), data.getZ(c)])
+            roi = np.array(x_y_values)
+
+
+
+            # roi = self.find_roi_around_point_by_index(x_max_point_index, data, width=10)
+            medium_roi = roi[:, 0].mean(), roi[:, 1].mean()
+
+            # mmt = MouseMoveThread(data.getY(x_max_point_index),
+            #                       data.getZ(x_max_point_index))
+            mmt = MouseMoveThread(medium_roi[0], medium_roi[1])
+            mmt.start()
 
             # check if user is clicking
             if x_max > CLICK_THRESHOLD:
                 logger.info("CLICK")
                 self.click()
 
-            mmt = MouseMoveThread(data.getY(x_max_point_index),
-                                  data.getZ(x_max_point_index))
-            mmt.start()
+    def find_roi_around_point_by_index(self, index, data, width=10):
+        x_y_values = []
 
-        end_time = time.time()
+        for r in range(-width, width + 1):
+            i = index + r * data.width
+            for c in range(i - width, i + width + 1):
+                if data.getDepthConfidence(c) > 0 and not (
+                        data.getX(c) > MIN_X_DIST or data.getX(c) < MAX_X_DIST or data.getY(
+                    c) > MIN_Y_DIST or data.getY(c) < MAX_Y_DIST or data.getZ(c) > MIN_Z_DIST):
+                    x_y_values.append([data.getY(c), data.getZ(c)])
+
+        return np.array(x_y_values)
 
     def click(self):
         if time.time() > self.last_click + CLICK_TIMEOUT:
