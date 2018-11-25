@@ -21,6 +21,7 @@ MIN_Z_DIST = .700
 CLICK_TIMEOUT = 1
 CLICK_THRESHOLD = -0.007
 
+
 screen_size = pyautogui.size()
 
 logger = logging.getLogger("reflectoah")
@@ -35,13 +36,23 @@ class MouseMoveThread(Thread):
         self.z = z
 
     def run(self):
-        x_val = (self.y - TOP_LEFT_X) / (BOTTOM_RIGHT_X - TOP_LEFT_X) * screen_size[0]
-        y_val = (self.z - TOP_LEFT_Y) / (BOTTOM_RIGHT_Y - TOP_LEFT_Y) * screen_size[1]
+        #x_val = (self.y - TOP_LEFT_X) / (BOTTOM_RIGHT_X - TOP_LEFT_X) * screen_size[0]
+        #y_val = (self.z - TOP_LEFT_Y) / (BOTTOM_RIGHT_Y - TOP_LEFT_Y) * screen_size[1]
+
+        x_val = (self.y - TOP_LEFT_X) / (BOTTOM_RIGHT_X - TOP_LEFT_X) * 2160
+        y_val = (self.z - TOP_LEFT_Y) / (BOTTOM_RIGHT_Y - TOP_LEFT_Y) * 3840
 
         pyautogui.moveTo(x_val, y_val, _pause=False)
 
+        #pyautogui.moveTo(2000, 10, _pause=False)
+
+        logger.debug("Move Mouse to")
+        logger.debug(x_val)
+        logger.debug(y_val)
 
 class ReflectoahListener(roypy.IDepthDataListener):
+    MOUSE_DOWN = False
+
     def __init__(self, q):
         super(ReflectoahListener, self).__init__()
         self.q = q
@@ -96,9 +107,11 @@ class ReflectoahListener(roypy.IDepthDataListener):
             mmt.start()
 
             # check if user is clicking
-            if x_max > CLICK_THRESHOLD:
-                logger.info("CLICK")
+            if x_max > CLICK_THRESHOLD and not self.MOUSE_DOWN:
                 self.click()
+            if x_max < (CLICK_THRESHOLD*1.1):
+                self.MOUSE_DOWN = False
+
 
     def find_roi_around_point_by_index(self, index, data, width=10):
         x_y_values = []
@@ -114,9 +127,9 @@ class ReflectoahListener(roypy.IDepthDataListener):
         return np.array(x_y_values)
 
     def click(self):
-        if time.time() > self.last_click + CLICK_TIMEOUT:
-            pyautogui.click()
-            self.last_click = time.time()
+        pyautogui.click()
+        self.MOUSE_DOWN = True
+        logger.info("Mouse Down")
 
     def paint(self, data):
         """
@@ -136,12 +149,16 @@ class ReflectoahListener(roypy.IDepthDataListener):
         # plt.pause(0.001)
 
     def move_mouse_by_coords(self, x, y, z):
-        logger.debug("move mouse")
+        logger.debug("move mouse2")
 
         x_val = (y - TOP_LEFT_X) / (BOTTOM_RIGHT_X - TOP_LEFT_X) * screen_size[0]
         y_val = (z - TOP_LEFT_Y) / (BOTTOM_RIGHT_Y - TOP_LEFT_Y) * screen_size[1]
 
-        pyautogui.moveTo(x_val, y_val, _pause=False)
+        #x_val = (y - TOP_LEFT_X) / (BOTTOM_RIGHT_X - TOP_LEFT_X) * 2160
+        #y_val = (z - TOP_LEFT_Y) / (BOTTOM_RIGHT_Y - TOP_LEFT_Y) * 3480
+
+        #pyautogui.moveTo(x_val, y_val, _pause=False)
+        pyautogui.moveTo(10, 10, _pause=False)
 
     def adjustZValue(self, zValue):
         """
