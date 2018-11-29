@@ -1,8 +1,10 @@
 import argparse
+import json
 import logging
 import queue
 import time
 
+import redis
 import pyautogui
 
 from Listener.MyListener import MyListener
@@ -25,6 +27,7 @@ pyautogui.PAUSE = 0
 
 frames = []
 
+r = redis.Redis(host='localhost')
 
 def sample_retrieve_data():
     platformhelper = PlatformHelper()
@@ -82,7 +85,7 @@ def sample_mouse_move():
     cam = opener.open_camera()
 
     q = queue.Queue()
-    l = ReflectoahListener(q)
+    l = ReflectoahListener(r)
     # status = cam.getLensParameters(lensParameters)
     # l.setLensParameters(lensParameters)
 
@@ -100,6 +103,7 @@ def sample_mouse_move():
     # process_event_queue(q, None, painter=l)
     time.sleep(20)
     cam.stopCapture()
+    connection.close()
 
 
 def process_event_queue(z_queue, gray_queue, painter=None, seconds=150):

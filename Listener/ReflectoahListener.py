@@ -1,7 +1,7 @@
+import json
 import logging
 import time
 from threading import Thread
-# import matplotlib.pyplot as plt
 import numpy as np
 import pyautogui
 
@@ -28,7 +28,6 @@ logger = logging.getLogger("reflectoah")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
-
 class MouseMoveThread(Thread):
     def __init__(self, y, z):
         super(MouseMoveThread, self).__init__()
@@ -53,9 +52,9 @@ class MouseMoveThread(Thread):
 class ReflectoahListener(roypy.IDepthDataListener):
     MOUSE_DOWN = False
 
-    def __init__(self, q):
+    def __init__(self, redis):
         super(ReflectoahListener, self).__init__()
-        self.q = q
+        self.redis = redis
         self.last_click = time.time()
 
     def onNewData(self, data):
@@ -101,10 +100,12 @@ class ReflectoahListener(roypy.IDepthDataListener):
             # roi = self.find_roi_around_point_by_index(x_max_point_index, data, width=10)
             medium_roi = roi[:, 0].mean(), roi[:, 1].mean()
 
-            # mmt = MouseMoveThread(data.getY(x_max_point_index),
-            #                       data.getZ(x_max_point_index))
-            mmt = MouseMoveThread(medium_roi[0], medium_roi[1])
-            mmt.start()
+            # send message to queue
+            self.redis.set('mouse_move', json.dumps(medium_roi))
+            #self.channel.basic_publish(exchange='', routing_key='mouse_move', body=json.dumps(medium_roi))
+            
+            #mmt = MouseMoveThread(medium_roi[0], medium_roi[1])
+            #mmt.start()
 
             # check if user is clicking
             if x_max > CLICK_THRESHOLD and not self.MOUSE_DOWN:
